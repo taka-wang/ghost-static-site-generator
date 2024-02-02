@@ -11,10 +11,7 @@ const getUrlLinks = (result, linkPath) => {
     const uncrawledUrl = get(page, 'loc[0]', '');
 
     if (uncrawledUrl) {
-      return [
-        ...accumulator,
-        uncrawledUrl,
-      ];
+      return [...accumulator, uncrawledUrl];
     }
 
     return accumulator;
@@ -26,32 +23,26 @@ const fetchUrlHelper = (url) => {
 
   if (url.includes('.js')) {
     /**
-     * TODO: Read this from the js files  instead
+     * TODO: Read this from the js files instead
      */
     crawlPageHelper(url.replace('.js', '.map.js'));
     crawlPageHelper(url.replace('.js', '.js.map'));
   }
 
-  if (`${url}`.includes('.xml')) {
-    urlpath = url.replace(OPTIONS.SOURCE_DOMAIN, "")
-    urlpath = "\\" + urlpath.substring(1);
-    const fileName = `${OPTIONS.STATIC_DIRECTORY}${urlpath}`;
+  if (url.includes('.xml')) {
+    let urlpath = url.replace(OPTIONS.SOURCE_DOMAIN, '');
+    urlpath = path.sep + urlpath.substring(1); // Use path.sep for cross-platform path separator
+    const fileName = path.join(OPTIONS.STATIC_DIRECTORY, urlpath);
 
     try {
-      const filePath = path.resolve(
-        process.cwd(),
-        fileName,
-      );
+      const filePath = path.resolve(process.cwd(), fileName);
       const fileContents = fs.readFileSync(filePath, 'utf8');
 
       parseString(fileContents, (err, result) => {
         const sitemaps = getUrlLinks(result, 'sitemapindex.sitemap');
         const urlsets = getUrlLinks(result, 'urlset.url');
 
-        [
-          ...sitemaps,
-          ...urlsets,
-        ].forEach(fetchUrlHelper);
+        [...sitemaps, ...urlsets].forEach(fetchUrlHelper);
       });
     } catch (error) {
       console.error(fileName, url, error);
